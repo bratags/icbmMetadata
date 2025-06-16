@@ -31,6 +31,19 @@ jobs:
                     echo "</ul></body></html>" >> "$index_file"
                   done
 
+                  # Generate models/index.html to list all model folders
+                  models_index="models/index.html"
+                  echo "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Index of models/</title></head><body>" > "$models_index"
+                  echo "<h1>Index of /models/</h1><ul>" >> "$models_index"
+
+                  for dir in models/*/; do
+                    [ -d "$dir" ] || continue
+                    dname=$(basename "$dir")
+                    echo "<li><a href=\"$dname/\">$dname/</a></li>" >> "$models_index"
+                  done
+
+                  echo "</ul></body></html>" >> "$models_index"
+
             - name: Commit and push changes
               run: |
                   git config user.name "github-actions[bot]"
