@@ -59,6 +59,45 @@ jobs:
                     echo '}' >> "$metadata_file"
                   done
 
+                  # Generate index.html and metadata.json inside each model/gallery sub folder
+                  for dir in models/*/gallery/; do
+                    # index.html
+                    index_file="${dir}index.html"
+                    echo "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Index of ${dir}</title></head><body>" > "$index_file"
+                    echo "<h1>Index of /${dir}</h1><ul>" >> "$index_file"
+
+                    for file in "$dir"*; do
+                      fname=$(basename "$file")
+                      if [ "$fname" != "index.html" ]; then
+                        echo "<li><a href=\"$fname\">$fname</a></li>" >> "$index_file"
+                      fi
+                    done
+
+                    echo "</ul></body></html>" >> "$index_file"
+
+                    # metadata.json
+                    metadata_file="${dir}metadata.json"
+                    echo '{' > "$metadata_file"
+                    echo '  "images": [' >> "$metadata_file"
+
+                    first=true
+                    for ext in $IMAGE_EXTENSIONS; do
+                      for img in "$dir"*.$ext; do
+                        [ -f "$img" ] || continue
+                        fname=$(basename "$img")
+                        if [ "$first" = true ]; then
+                          echo "    \"$fname\"" >> "$metadata_file"
+                          first=false
+                        else
+                          echo "    ,\"$fname\"" >> "$metadata_file"
+                        fi
+                      done
+                    done
+
+                    echo '  ]' >> "$metadata_file"
+                    echo '}' >> "$metadata_file"
+                  done
+
                   # Generate models/index.html to list all model folders
                   models_index="models/index.html"
                   echo "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Index of models/</title></head><body>" > "$models_index"
@@ -71,6 +110,7 @@ jobs:
                   done
 
                   echo "</ul></body></html>" >> "$models_index"
+                  
             - name: Commit and push changes
               run: |
                   git config user.name "github-actions[bot]"
@@ -78,6 +118,8 @@ jobs:
                   git add models/index.html
                   git add models/*/index.html
                   git add models/*/metadata.json
+                  git add models/*/gallery/index.html
+                  git add models/*/gallery/metadata.json
 
                   if git diff --cached --quiet; then
                     echo "No changes to commit."
